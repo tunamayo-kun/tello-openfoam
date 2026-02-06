@@ -1,0 +1,36 @@
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       volVectorField;
+    location    0;
+    object      U;
+}
+dimensions [0 1 -1 0 0 0 0];
+internalField uniform (0.0 0.0 0.0);
+boundaryField
+{
+    outlet-2
+    {
+        type pressureInletOutletVelocity;
+        value uniform (0 0 0);
+    }
+    inlet-2
+    {
+        type pressureInletOutletVelocity;
+        value uniform (0 0 0);
+    }
+    side-2
+    {
+        type pressureInletOutletVelocity;
+        value uniform (0 0 0);
+    }
+    tello-blade-customv2
+    {
+        type MRFnoSlip;
+    }
+    defaultFaces
+    {
+        type slip;
+    }
+}
