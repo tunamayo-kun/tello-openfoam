@@ -1,0 +1,213 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2412                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      snappyHexMeshDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+castellatedMesh true;
+snap            true;
+addLayers       true;
+
+geometry
+{
+    Assembly
+    {
+        type triSurfaceMesh;
+        file "Assembly.stl";
+        regions
+        {
+            tello-blade-customv2 { name tello-blade-customv2; }
+        }
+    }
+    inlet-2
+    {
+        type triSurfaceMesh;
+        file "inlet-2.stl";
+        regions { inlet-2 { name inlet-2; } }
+    }
+    outlet-2
+    {
+        type triSurfaceMesh;
+        file "outlet-2.stl";
+        regions { outlet-2 { name outlet-2; } }
+    }
+    side-2
+    {
+        type triSurfaceMesh;
+        file "side-2.stl";
+        regions { side-2 { name side-2; } }
+    }
+    mrfCylinder0
+    {
+        type searchableCylinder;
+        point1 (0.0 0.0 -0.0060000010000000005);
+        point2 (0.0 0.0 0.003000001);
+        radius 0.040100000999999996;
+    }
+    refinementCylinder
+    {
+        type searchableCylinder;
+        point1 (0.0 0.0 -0.8); 
+        point2 (0.0 0.0 0.01);
+        radius 0.08;
+    }
+}
+
+castellatedMeshControls
+{
+    maxLocalCells 8000000;
+    maxGlobalCells 8000000;
+    minRefinementCells 1;
+    maxLoadUnbalance 0.10;
+    nCellsBetweenLevels 4;
+
+    features (
+        // ベースが粗くなったため、特徴線の抽出レベルも上げます
+        { file "Assembly.eMesh"; level 8; } 
+        { file "inlet-2.eMesh"; level 2; }
+        { file "outlet-2.eMesh"; level 2; }
+        { file "side-2.eMesh"; level 2; }
+    );
+
+    refinementSurfaces
+    {
+        Assembly
+        {
+            // 【変更】Level (5 6) -> (7 8)
+            // ベース20mmに対し、Level 7 = 約0.15mm。
+            // これで以前の設定と同等の表面解像度を維持します。
+            level (8 9);
+            regions
+            {
+                tello-blade-customv2
+                {
+                    level (8 9);
+                    patchInfo { type wall; }
+                }
+            }
+        }
+        inlet-2
+        {
+            level (0 0);
+            regions { inlet-2 { level (0 0); patchInfo { type patch; } } }
+        }
+        outlet-2
+        {
+            level (0 0);
+            regions { outlet-2 { level (0 0); patchInfo { type patch; } } }
+        }
+        side-2
+        {
+            level (0 0);
+            regions { side-2 { level (0 0); patchInfo { type patch; } } }
+        }
+        mrfCylinder0
+        {
+            mode inside;
+            level (0 0);
+            cellZone mrfCellZone0;
+            faceZone mrfFaceZone0;
+        }
+    }
+
+    refinementRegions
+    {
+        refinementCylinder
+        {
+            mode inside;
+            // 【変更】Level 2 -> 4 (約1.25mm)
+            levels ((2 2));
+        }
+    }
+
+    locationInMesh (0.0 0.0 0.05);
+    resolveFeatureAngle 30;
+    allowFreeStandingZoneFaces false;
+}
+
+snapControls
+{
+    nSolveIter 300;
+    nSmoothPatch 3;
+    tolerance 2.0;
+    nRelaxIter 5;
+    nFeatureSnapIter 40;
+    
+    implicitFeatureSnap true;
+    explicitFeatureSnap true;
+    multiRegionFeatureSnap true;
+}
+
+addLayersControls
+{
+    relativeSizes false;
+    layers
+    {
+        tello-blade-customv2
+        {
+            // 【変更】層数を5 -> 8に増加
+            // 第一層厚さは維持しつつ、背景メッシュへの遷移を滑らかにします
+            nSurfaceLayers 3;
+        }
+    }
+
+    expansionRatio 1.2;
+    // y+ <= 1 を狙う設定 (4µm)
+    firstLayerThickness 0.000003;
+
+    minThickness 1e-7;
+    nGrow 0;
+    
+    featureAngle 150;
+    slipFeatureAngle 20;
+    nRelaxIter 10;
+    nSmoothSurfaceNormals 10;
+    nSmoothNormals 50;
+    nSmoothThickness 50;
+
+    maxFaceThicknessRatio 0.5;
+    maxThicknessToMedialRatio 0.7;
+    minMedianAxisAngle 75;
+    nBufferCellsNoExtrude 0;
+    nLayerIter 100;
+    nRelaxedIter 20;
+}
+
+meshQualityControls
+{
+    maxNonOrtho 70;
+    maxBoundarySkewness 15;
+    maxInternalSkewness 5;
+    maxConcave 85;
+    minFlatness 0.4;
+    minVol 1.00E-20;
+    minTetQuality -1e30;
+    minArea -1;
+    minTwist 0.01;
+    minDeterminant 0.000001;
+    minFaceWeight 0.02;
+    minVolRatio 0.01;
+    minTriangleTwist -1;
+    nSmoothScale 4;
+    errorReduction 0.75;
+    relaxed
+    {
+        maxNonOrtho 80;
+        maxBoundarySkewness 40;
+    }
+}
+
+debug 0;
+mergeTolerance 1e-6;
+// ************************************************************************* //

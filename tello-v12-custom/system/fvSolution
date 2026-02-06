@@ -1,0 +1,77 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v12                                   |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      fvSolution;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+solvers
+{
+    p
+    {
+        solver          GAMG;
+        tolerance       1e-6;
+        relTol          0.01;
+        smoother        GaussSeidel;
+        
+        // 【追加】安定性向上のためのスイープ設定
+        nPreSweeps      2;
+        nPostSweeps     2;
+        
+        // 【追加】高速化
+        cacheAgglomeration on; 
+    }
+
+    "(U|k|omega)"
+    {
+        solver          smoothSolver;
+        smoother        symGaussSeidel;
+        tolerance       1e-6;
+        relTol          0.1;
+    }
+}
+
+SIMPLE
+{
+    // 【変更】補正回数を増やして収束を安定させる (1 -> 2)
+    nNonOrthogonalCorrectors 2;
+    
+    consistent      yes;
+
+    pRefCell        0;
+    pRefValue       0;
+
+    residualControl
+    {
+        p               1e-5;
+        U               1e-5;
+        k               1e-5;
+        omega           1e-5;
+    }
+}
+
+relaxationFactors
+{
+    fields
+    {
+        p               0.3; // 圧力の緩和係数を下げる（標準は0.3）
+    }
+    equations
+    {
+        U               0.7; // 速度の緩和係数を下げる（標準は0.7）
+        k               0.7;
+        omega           0.7;
+    }
+}
+
+// ************************************************************************* //

@@ -1,0 +1,17 @@
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "constant";
+    object      MRFProperties;
+}
+MRF0
+{
+  cellZone mrfCellZone0;
+  active yes;
+  nonRotatingPatches ();
+  origin (0.0 0.0 -0.003);
+  axis (0.0 0.0 1.0);
+  omega constant 2094.3951023931954;//[rad/s]
+}
